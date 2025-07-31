@@ -1,0 +1,269 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: smartrelief-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smartrelief_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-smartrelief}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - smartrelief-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartrelief}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: smartrelief-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smartrelief-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: smartrelief-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-smartrelief}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-smartrelief_dev}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./packages/backend:/app
+      - /app/node_modules
+      - ./packages/shared:/shared
+    networks:
+      - smartrelief-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/backend/src
+          target: /app/src
+        - action: rebuild
+          path: ./packages/backend/package.json
+
+  # AI/ML Service
+  ai-service:
+    build:
+      context: ./packages/ai-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: smartrelief-ai
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-smartrelief}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-smartrelief_dev}
+      REDIS_URL: redis://redis:6379
+      BACKEND_API_URL: http://backend:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./packages/ai-service:/app
+      - ./packages/ai-service/ml_models:/app/ml_models
+      - ai_models_cache:/app/.cache
+    networks:
+      - smartrelief-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/ai-service/app
+          target: /app/app
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: smartrelief-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - smartrelief-network
+    depends_on:
+      - backend
+      - ai-service
+    restart: unless-stopped
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartrelief-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - smartrelief-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartrelief-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    networks:
+      - smartrelief-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Elasticsearch for Logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: smartrelief-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - smartrelief-network
+    restart: unless-stopped
+
+  # Kibana for Log Visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: smartrelief-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - smartrelief-network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # Jaeger for Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: smartrelief-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+    networks:
+      - smartrelief-network
+    restart: unless-stopped
+
+  # MinIO for Local S3-compatible Storage
+  minio:
+    image: minio/minio:latest
+    container_name: smartrelief-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    command: server /data --console-address ":9001"
+    networks:
+      - smartrelief-network
+    restart: unless-stopped
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: smartrelief-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - smartrelief-network
+    restart: unless-stopped
+
+networks:
+  smartrelief-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  minio_data:
+    driver: local
+  ai_models_cache:
+    driver: local

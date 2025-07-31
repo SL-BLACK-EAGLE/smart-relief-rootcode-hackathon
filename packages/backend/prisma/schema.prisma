@@ -1,0 +1,353 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  VICTIM
+  DONOR
+  VOLUNTEER
+  ORGANIZATION
+  ADMIN
+}
+
+enum AidCategory {
+  MEDICAL
+  FOOD
+  WATER
+  SHELTER
+  CLOTHING
+  TRANSPORTATION
+  COMMUNICATION
+  RESCUE
+  EVACUATION
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  FULFILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum VolunteerStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum TaskStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  EMERGENCY
+  SUCCESS
+}
+
+enum ResourceStatus {
+  AVAILABLE
+  ALLOCATED
+  IN_TRANSIT
+  DELIVERED
+  EXPIRED
+}
+
+// User Management
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  phoneNumber String?  @unique
+  password    String
+  role        UserRole
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Profile
+  profile UserProfile?
+
+  // Relationships based on role
+  aidRequests    AidRequest[]
+  donations      Donation[]
+  volunteerTasks VolunteerTask[]
+  notifications  Notification[]
+
+  // Emergency contacts
+  emergencyContacts EmergencyContact[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  avatar      String?
+  dateOfBirth DateTime?
+  gender      String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  zipCode     String?
+  
+  // Location (for geospatial queries)
+  latitude    Float?
+  longitude   Float?
+  
+  // Emergency info
+  bloodType   String?
+  allergies   String?
+  medicalInfo String?
+  
+  // Volunteer specific
+  skills      String[] // JSON array of skills
+  availability String? // JSON schedule
+  
+  // Organization specific
+  organizationName String?
+  organizationType String?
+  taxId            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model EmergencyContact {
+  id           String @id @default(uuid())
+  userId       String
+  name         String
+  relationship String
+  phoneNumber  String
+  email        String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("emergency_contacts")
+}
+
+// Aid Request System
+model AidRequest {
+  id          String        @id @default(uuid())
+  userId      String
+  title       String
+  description String
+  category    AidCategory
+  priority    Int           @default(5) // 1-10 scale
+  status      RequestStatus @default(PENDING)
+  
+  // Location
+  latitude    Float
+  longitude   Float
+  address     String?
+  
+  // Images for damage assessment
+  images      String[] // Array of image URLs
+  
+  // AI Assessment
+  damageAssessment Json? // AI damage assessment results
+  estimatedCost    Float?
+  urgencyScore     Int?
+  
+  // Fulfillment
+  estimatedFulfillmentTime DateTime?
+  actualFulfillmentTime    DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime?
+
+  user               User                 @relation(fields: [userId], references: [id])
+  resourceAllocations ResourceAllocation[]
+  volunteerTasks     VolunteerTask[]
+
+  @@index([latitude, longitude])
+  @@index([status, priority])
+  @@index([category, status])
+  @@map("aid_requests")
+}
+
+// Resource Management
+model Resource {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  category    AidCategory
+  quantity    Int            @default(0)
+  unit        String         // e.g., "pieces", "kg", "liters"
+  status      ResourceStatus @default(AVAILABLE)
+  
+  // Location
+  latitude    Float?
+  longitude   Float?
+  address     String?
+  
+  // Metadata
+  expiryDate  DateTime?
+  estimatedValue Float?
+  
+  // Organization/Donor info
+  donorId     String?
+  organizationId String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  allocations ResourceAllocation[]
+
+  @@index([category, status])
+  @@index([latitude, longitude])
+  @@map("resources")
+}
+
+model ResourceAllocation {
+  id            String @id @default(uuid())
+  resourceId    String
+  aidRequestId  String
+  quantityAllocated Int
+  status        ResourceStatus @default(ALLOCATED)
+  
+  allocatedAt   DateTime @default(now())
+  deliveredAt   DateTime?
+  
+  resource    Resource   @relation(fields: [resourceId], references: [id])
+  aidRequest  AidRequest @relation(fields: [aidRequestId], references: [id])
+
+  @@map("resource_allocations")
+}
+
+// Volunteer System
+model VolunteerTask {
+  id           String     @id @default(uuid())
+  aidRequestId String
+  volunteerId  String
+  title        String
+  description  String
+  status       TaskStatus @default(ASSIGNED)
+  
+  // Location
+  latitude     Float?
+  longitude    Float?
+  
+  // Time tracking
+  estimatedDuration Int? // in minutes
+  actualDuration    Int? // in minutes
+  
+  assignedAt   DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  
+  // Evidence
+  completionPhotos String[] // Array of photo URLs
+  completionNotes  String?
+
+  aidRequest AidRequest @relation(fields: [aidRequestId], references: [id])
+  volunteer  User       @relation(fields: [volunteerId], references: [id])
+
+  @@index([volunteerId, status])
+  @@map("volunteer_tasks")
+}
+
+// Donation Tracking
+model Donation {
+  id       String @id @default(uuid())
+  donorId  String
+  amount   Float
+  currency String @default("USD")
+  
+  // Allocation tracking
+  allocation Json? // How the donation was used
+  
+  // Impact metrics
+  impactMetrics Json?
+  
+  // Payment info
+  paymentMethod    String?
+  transactionId    String?
+  receiptUrl       String?
+  
+  // Recurring donations
+  isRecurring      Boolean @default(false)
+  recurringPeriod  String? // "monthly", "quarterly", "yearly"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  donor User @relation(fields: [donorId], references: [id])
+
+  @@map("donations")
+}
+
+// Notification System
+model Notification {
+  id       String           @id @default(uuid())
+  userId   String
+  title    String
+  message  String
+  type     NotificationType @default(INFO)
+  isRead   Boolean          @default(false)
+  
+  // Metadata
+  data     Json?
+  
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// Analytics and Metrics
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String
+  userId    String?
+  data      Json
+  timestamp DateTime @default(now())
+  
+  @@index([eventType, timestamp])
+  @@map("analytics_events")
+}
+
+// Audit Logs
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String
+  resourceId String?
+  oldValues Json?
+  newValues Json?
+  timestamp DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId, timestamp])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}

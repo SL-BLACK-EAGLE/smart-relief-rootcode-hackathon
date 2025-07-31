@@ -1,0 +1,55 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+pydantic==2.4.2
+pydantic-settings==2.0.3
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.7
+alembic==1.12.1
+redis==5.0.1
+
+# AI/ML Libraries
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.0
+tensorflow==2.13.0
+torch==2.0.1
+torchvision==0.15.2
+ultralytics==8.0.196  # YOLO v8
+Pillow==10.0.1
+
+# Data Processing
+scipy==1.11.3
+matplotlib==3.7.2
+seaborn==0.12.2
+plotly==5.17.0
+
+# Geospatial
+geopy==2.4.0
+shapely==2.0.2
+geopandas==0.14.0
+
+# HTTP Clients
+httpx==0.25.0
+aiohttp==3.8.6
+
+# Monitoring & Logging
+prometheus-client==0.18.0
+structlog==23.1.0
+
+# Testing
+pytest==7.4.2
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx-mock==0.15.0
+
+# Development
+black==23.9.1
+isort==5.12.0
+flake8==6.1.0
+mypy==1.6.0
