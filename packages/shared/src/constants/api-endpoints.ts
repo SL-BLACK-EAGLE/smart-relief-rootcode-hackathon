@@ -97,6 +97,60 @@ export const API_ENDPOINTS = {
     GEOSPATIAL: (analysisType: string) => `/ai/api/geospatial/${analysisType}`,
   },
 
+  // Government Services
+  GOVERNMENT_SERVICES: {
+    BASE: '/api/government-services',
+    BY_ID: (id: string) => `/api/government-services/${id}`,
+    SEARCH: '/api/government-services/search',
+    CATEGORIES: '/api/government-services/categories',
+    AVAILABILITY: (id: string) => `/api/government-services/${id}/availability`,
+    TIME_SLOTS: (id: string) => `/api/government-services/${id}/time-slots`,
+  },
+
+  // Government Service Appointments
+  APPOINTMENTS: {
+    BASE: '/api/appointments',
+    BY_ID: (id: string) => `/api/appointments/${id}`,
+    USER_APPOINTMENTS: (userId: string) => `/api/appointments/user/${userId}`,
+    BOOK: '/api/appointments/book',
+    RESCHEDULE: (id: string) => `/api/appointments/${id}/reschedule`,
+    CANCEL: (id: string) => `/api/appointments/${id}/cancel`,
+    CHECK_IN: (id: string) => `/api/appointments/${id}/check-in`,
+    COMPLETE: (id: string) => `/api/appointments/${id}/complete`,
+    FEEDBACK: (id: string) => `/api/appointments/${id}/feedback`,
+    DOCUMENTS: (id: string) => `/api/appointments/${id}/documents`,
+  },
+
+  // Queue Management
+  QUEUE: {
+    BASE: '/api/queue',
+    SERVICE_QUEUE: (serviceId: string) => `/api/queue/service/${serviceId}`,
+    JOIN: '/api/queue/join',
+    LEAVE: (id: string) => `/api/queue/${id}/leave`,
+    POSITION: (id: string) => `/api/queue/${id}/position`,
+    CURRENT: (serviceId: string) => `/api/queue/service/${serviceId}/current`,
+    CALL_NEXT: (serviceId: string) => `/api/queue/service/${serviceId}/call-next`,
+  },
+
+  // Government Offices
+  OFFICES: {
+    BASE: '/api/offices',
+    BY_ID: (id: string) => `/api/offices/${id}`,
+    NEARBY: '/api/offices/nearby',
+    BY_SERVICE: (serviceId: string) => `/api/offices/service/${serviceId}`,
+  },
+
+  // Emergency Services
+  EMERGENCY_SERVICES: {
+    BASE: '/api/emergency-services',
+    REQUESTS: '/api/emergency-services/requests',
+    BY_ID: (id: string) => `/api/emergency-services/requests/${id}`,
+    ASSIGN: (id: string) => `/api/emergency-services/requests/${id}/assign`,
+    UPDATE_STATUS: (id: string) => `/api/emergency-services/requests/${id}/status`,
+    NEARBY: '/api/emergency-services/nearby',
+    URGENT: '/api/emergency-services/urgent',
+  },
+
   // File Upload
   UPLOAD: {
     BASE: '/api/upload',

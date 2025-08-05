@@ -1,10 +1,10 @@
 // User Types
-export type UserRole = 'victim' | 'donor' | 'volunteer' | 'admin' | 'organization';
+export type UserRole = 'VICTIM' | 'DONOR' | 'VOLUNTEER' | 'ORGANIZATION' | 'ADMIN';
 
 export interface User {
   id: string;
-  email: string;
-  phone?: string;
+  email?: string;
+  phone: string;
   role: UserRole;
   profile: UserProfile;
   isVerified: boolean;
@@ -50,4 +50,19 @@ export interface RegisterData {
   role: UserRole;
   profile: Partial<UserProfile>;
   acceptTerms: boolean;
+}
+
+// Notification Types
+export type NotificationType = 'INFO' | 'WARNING' | 'EMERGENCY' | 'SUCCESS';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  data?: any;
+  createdAt: Date;
+  readAt?: Date;
 }
