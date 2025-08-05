@@ -67,12 +67,11 @@ export type TaskCategory =
   | 'other';
 
 export type TaskStatus = 
-  | 'open'
-  | 'assigned'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled'
-  | 'on_hold';
+  | 'OPEN'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 

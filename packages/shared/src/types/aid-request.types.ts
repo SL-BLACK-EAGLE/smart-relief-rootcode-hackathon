@@ -15,26 +15,25 @@ export interface Address {
 
 // Aid Request Types
 export type AidCategory = 
-  | 'food'
-  | 'water'
-  | 'medical'
-  | 'shelter'
-  | 'clothing'
-  | 'transportation'
-  | 'communication'
-  | 'rescue'
-  | 'other';
+  | 'MEDICAL'
+  | 'FOOD'
+  | 'WATER'
+  | 'SHELTER'
+  | 'CLOTHING'
+  | 'TRANSPORTATION'
+  | 'COMMUNICATION'
+  | 'RESCUE'
+  | 'EVACUATION'
+  | 'OTHER';
 
 export type RequestStatus = 
-  | 'pending'
-  | 'processing'
-  | 'assigned'
-  | 'in_progress'
-  | 'fulfilled'
-  | 'cancelled'
-  | 'expired';
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'FULFILLED'
+  | 'CANCELLED'
+  | 'EXPIRED';
 
-export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical';
+export type UrgencyLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'LIFE_THREATENING';
 
 export interface AidRequest {
   id: string;

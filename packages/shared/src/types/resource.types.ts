@@ -14,13 +14,11 @@ export type ResourceCategory =
   | 'other';
 
 export type ResourceStatus = 
-  | 'available'
-  | 'reserved'
-  | 'allocated'
-  | 'in_transit'
-  | 'delivered'
-  | 'expired'
-  | 'damaged';
+  | 'AVAILABLE'
+  | 'ALLOCATED'
+  | 'IN_TRANSIT'
+  | 'DELIVERED'
+  | 'EXPIRED';
 
 export interface Resource {
   id: string;
