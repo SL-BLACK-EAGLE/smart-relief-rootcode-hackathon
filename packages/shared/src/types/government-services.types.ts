@@ -1,23 +1,32 @@
 import { GeoPoint, Address } from './aid-request.types';
 
 // Government Service Categories
-export type GovernmentServiceCategory = 
-  | 'HEALTHCARE'
-  | 'EDUCATION'
-  | 'SOCIAL_WELFARE'
-  | 'HOUSING'
-  | 'EMPLOYMENT'
-  | 'DOCUMENTATION'
-  | 'LICENSING'
-  | 'PERMITS'
-  | 'EMERGENCY_SERVICES'
-  | 'UTILITIES'
-  | 'TRANSPORTATION'
-  | 'LEGAL_AID'
-  | 'INSURANCE'
-  | 'DISABILITY_SERVICES'
-  | 'ELDERLY_CARE'
-  | 'OTHER';
+export type GovernmentServiceCategory =
+    | 'EMERGENCY_SHELTER'           // Temporary housing, evacuation centers
+    | 'FOOD_DISTRIBUTION'           // Food banks, meal services, nutrition programs
+    | 'WATER_SUPPLY'                // Clean water access, purification, distribution
+    | 'MEDICAL_AID'                 // Emergency medical care, field hospitals, first aid
+    | 'SEARCH_RESCUE'               // Search and rescue operations, missing persons
+    | 'EVACUATION_TRANSPORT'        // Emergency evacuation, transportation services
+    | 'DISASTER_ASSESSMENT'         // Damage assessment, AI-powered analysis
+    | 'COMMUNICATION_SERVICES'      // Emergency communication, internet access
+    | 'POWER_RESTORATION'           // Emergency power, generator services
+    | 'PSYCHOLOGICAL_SUPPORT'       // Mental health, trauma counseling, crisis support
+    | 'CLEANUP_DEBRIS'              // Debris removal, environmental cleanup
+    | 'FINANCIAL_AID'               // Emergency funds, disaster loans, grants
+    | 'LOGISTICS_COORDINATION'      // Resource coordination, supply chain management
+    | 'VOLUNTEER_COORDINATION'      // Volunteer management, skill matching
+    | 'ANIMAL_RESCUE'               // Pet rescue, livestock assistance
+    | 'CHILD_PROTECTION'            // Unaccompanied minors, child safety services
+    | 'ELDERLY_ASSISTANCE'          // Senior care, mobility assistance
+    | 'DISABILITY_SUPPORT'          // Accessibility services, special needs assistance
+    | 'DOCUMENTATION_RECOVERY'      // Lost document replacement, identity verification
+    | 'LEGAL_AID'                   // Legal assistance, insurance claims, rights protection
+    | 'EDUCATION_CONTINUITY'        // Temporary schools, educational materials
+    | 'INFRASTRUCTURE_REPAIR'       // Critical infrastructure restoration
+    | 'COMMUNITY_COORDINATION'      // Local community organizing, information sharing
+    | 'DONATION_MANAGEMENT'         // Donation collection, sorting, distribution
+    | 'OTHER';
 
 // Appointment Status Types
 export type AppointmentStatus = 
