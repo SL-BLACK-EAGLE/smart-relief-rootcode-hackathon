@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -423,10 +424,63 @@ async function main() {
     }
   });
 
+  // Seed users (admin and a sample user) idempotently
+  console.log('Seeding users...');
+  const adminEmail = 'admin@smartrelief.test';
+  const userEmail = 'user1@smartrelief.test';
+  const adminPassword = await bcrypt.hash('Admin123!', 10);
+  const userPassword = await bcrypt.hash('Passw0rd!', 10);
+
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      email: adminEmail,
+      password: adminPassword,
+      role: 'ADMIN',
+      isVerified: true,
+    },
+  });
+
+  const sampleUser = await prisma.user.upsert({
+    where: { email: userEmail },
+    update: {},
+    create: {
+      email: userEmail,
+      password: userPassword,
+      role: 'VICTIM',
+      isVerified: true,
+    },
+  });
+
+  // Ensure a deterministic initial queue entry for healthcare service
+  console.log('Seeding initial queue entry...');
+  const existingQueue = await prisma.governmentServiceQueue.findFirst({
+    where: { serviceId: healthcareService.id, userId: sampleUser.id, status: { in: ['WAITING', 'CALLED', 'BEING_SERVED'] } },
+  });
+  if (!existingQueue) {
+    const waitingCount = await prisma.governmentServiceQueue.count({
+      where: { serviceId: healthcareService.id, status: 'WAITING' },
+    });
+    await prisma.governmentServiceQueue.create({
+      data: {
+        serviceId: healthcareService.id,
+        userId: sampleUser.id,
+        position: waitingCount + 1,
+        estimatedWaitTime: (waitingCount + 1) * healthcareService.avgProcessingTime,
+        status: 'WAITING',
+        priority: 'NORMAL',
+        reason: 'Seeded test entry',
+      },
+    });
+  }
+
   console.log('✅ Seeded government services data successfully!');
   console.log(`Created ${await prisma.governmentService.count()} government services`);
   console.log(`Created ${await prisma.governmentOffice.count()} government offices`);
   console.log(`Created ${await prisma.governmentServiceTimeSlot.count()} time slots`);
+  console.log(`Users: ${await prisma.user.count()} (admin: ${adminEmail}, user: ${userEmail})`);
+  console.log(`Queue entries: ${await prisma.governmentServiceQueue.count()}`);
 }
 
 main()

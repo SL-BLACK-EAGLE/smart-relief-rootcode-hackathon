@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -302,6 +303,33 @@ async function main() {
         }
       }
     }
+
+    // Seed admin and sample user
+    console.log('Seeding users...');
+    const adminEmail = 'admin@smartrelief.test';
+    const userEmail = 'user1@smartrelief.test';
+    const adminPassword = await bcrypt.hash('Admin123!', 10);
+    const userPassword = await bcrypt.hash('Passw0rd!', 10);
+
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: {},
+      create: {
+        email: adminEmail,
+        password: adminPassword,
+        role: 'ADMIN',
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: userEmail },
+      update: {},
+      create: {
+        email: userEmail,
+        password: userPassword,
+        role: 'VICTIM',
+      },
+    });
 
     console.log('✅ Database seeding completed successfully!');
     console.log(`Created ${services.length} government services`);
