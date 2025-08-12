@@ -1,8 +1,8 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/database';
+import { getIO } from '../config/socket';
 import { AuthenticatedRequest } from '../types/express.types';
 
-const prisma = new PrismaClient();
 
 // Join queue for a service
 export const joinQueue = async (req: AuthenticatedRequest, res: Response) => {
@@ -53,7 +53,7 @@ export const joinQueue = async (req: AuthenticatedRequest, res: Response) => {
       }
     });
 
-    const queueEntry = await prisma.governmentServiceQueue.create({
+  const queueEntry = await prisma.governmentServiceQueue.create({
       data: {
         serviceId,
         userId,
@@ -64,6 +64,8 @@ export const joinQueue = async (req: AuthenticatedRequest, res: Response) => {
         status: 'WAITING'
       }
     });
+
+  getIO()?.to(serviceId).emit('queue:joined', { serviceId, entry: queueEntry });
 
     res.status(201).json({
       success: true,
@@ -86,16 +88,7 @@ export const getQueuePosition = async (req: AuthenticatedRequest, res: Response)
     const { id } = req.params;
 
     const queueEntry = await prisma.governmentServiceQueue.findUnique({
-      where: { id },
-      include: {
-        service: {
-          select: {
-            name: true,
-            department: true,
-            avgProcessingTime: true
-          }
-        }
-      }
+      where: { id }
     });
 
     if (!queueEntry) {
@@ -122,12 +115,17 @@ export const getQueuePosition = async (req: AuthenticatedRequest, res: Response)
       }
     });
 
-    const updatedEstimate = currentPosition * (queueEntry.service?.avgProcessingTime || 30);
+    const service = await prisma.governmentService.findUnique({
+      where: { id: queueEntry.serviceId },
+      select: { name: true, department: true, avgProcessingTime: true }
+    });
+    const updatedEstimate = currentPosition * ((service?.avgProcessingTime as number | undefined) || 30);
 
     res.json({
       success: true,
       data: {
         ...queueEntry,
+        service,
         currentPosition: currentPosition + 1,
         updatedEstimatedWaitTime: updatedEstimate
       }
@@ -174,13 +172,14 @@ export const leaveQueue = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     // Update queue entry status
-    await prisma.governmentServiceQueue.update({
+  await prisma.governmentServiceQueue.update({
       where: { id },
       data: {
         status: 'LEFT_QUEUE',
         leftQueueAt: new Date()
       }
     });
+  getIO()?.to(queueEntry.serviceId).emit('queue:left', { serviceId: queueEntry.serviceId, id });
 
     // Update positions for remaining queue entries
     await prisma.governmentServiceQueue.updateMany({
@@ -220,25 +219,10 @@ export const getServiceQueue = async (req: AuthenticatedRequest, res: Response) 
       });
     }
 
-    const queue = await prisma.governmentServiceQueue.findMany({
+  const queue = await prisma.governmentServiceQueue.findMany({
       where: {
         serviceId,
         status: { in: ['WAITING', 'CALLED', 'BEING_SERVED'] }
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                phoneNumber: true
-              }
-            }
-          }
-        }
       },
       orderBy: { position: 'asc' }
     });
@@ -248,6 +232,9 @@ export const getServiceQueue = async (req: AuthenticatedRequest, res: Response) 
       data: queue
     });
   } catch (error) {
+    if ((error as any)?.code === 'P2021') {
+      return res.status(200).json({ success: true, data: [] });
+    }
     console.error('Error getting service queue:', error);
     res.status(500).json({
       success: false,
@@ -270,27 +257,12 @@ export const callNextInQueue = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Get next person in queue
-    const nextInQueue = await prisma.governmentServiceQueue.findFirst({
+  const nextInQueue = await prisma.governmentServiceQueue.findFirst({
       where: {
         serviceId,
         status: 'WAITING'
       },
-      orderBy: { position: 'asc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                phoneNumber: true
-              }
-            }
-          }
-        }
-      }
+      orderBy: { position: 'asc' }
     });
 
     if (!nextInQueue) {
@@ -301,28 +273,15 @@ export const callNextInQueue = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Update status to called
-    const updatedEntry = await prisma.governmentServiceQueue.update({
+  const updatedEntry = await prisma.governmentServiceQueue.update({
       where: { id: nextInQueue.id },
       data: {
         status: 'CALLED',
         notifiedAt: new Date()
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                phoneNumber: true
-              }
-            }
-          }
-        }
       }
     });
+
+  getIO()?.to(serviceId).emit('queue:called', { serviceId, entry: updatedEntry });
 
     res.json({
       success: true,
@@ -330,6 +289,9 @@ export const callNextInQueue = async (req: AuthenticatedRequest, res: Response) 
       message: 'Next person called successfully'
     });
   } catch (error) {
+    if ((error as any)?.code === 'P2021') {
+      return res.status(404).json({ success: false, message: 'No one waiting in queue' });
+    }
     console.error('Error calling next in queue:', error);
     res.status(500).json({
       success: false,
@@ -351,25 +313,10 @@ export const getCurrentlyServing = async (req: AuthenticatedRequest, res: Respon
       });
     }
 
-    const currentlyServing = await prisma.governmentServiceQueue.findFirst({
+  const currentlyServing = await prisma.governmentServiceQueue.findFirst({
       where: {
         serviceId,
         status: 'BEING_SERVED'
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                phoneNumber: true
-              }
-            }
-          }
-        }
       }
     });
 
@@ -378,6 +325,9 @@ export const getCurrentlyServing = async (req: AuthenticatedRequest, res: Respon
       data: currentlyServing
     });
   } catch (error) {
+    if ((error as any)?.code === 'P2021') {
+      return res.status(200).json({ success: true, data: null });
+    }
     console.error('Error getting currently serving:', error);
     res.status(500).json({
       success: false,

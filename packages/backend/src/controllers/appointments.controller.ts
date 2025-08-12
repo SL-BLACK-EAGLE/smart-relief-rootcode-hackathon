@@ -1,13 +1,8 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { 
-  BookAppointmentRequest,
-  RescheduleAppointmentRequest,
-  AppointmentSearchParams
-} from '../../../shared/src/types/government-services.types';
+import prisma from '../config/database';
+import { getIO } from '../config/socket';
+import type { BookAppointmentRequest, RescheduleAppointmentRequest } from '@smartrelief/shared';
 import { AuthenticatedRequest } from '../types/express.types';
-
-const prisma = new PrismaClient();
 
 // Generate booking reference
 const generateBookingReference = (): string => {
@@ -56,7 +51,8 @@ export const bookAppointment = async (req: AuthenticatedRequest, res: Response) 
 
     // Check if the time slot is valid for this service
     const validTimeSlot = service.timeSlots.find(
-      slot => slot.dayOfWeek === dayOfWeek && slot.startTime === appointmentData.timeSlot
+      (slot: { dayOfWeek: number; startTime: string; maxAppointments: number }) =>
+        slot.dayOfWeek === dayOfWeek && slot.startTime === appointmentData.timeSlot
     );
 
     if (!validTimeSlot) {
@@ -148,11 +144,11 @@ export const bookAppointment = async (req: AuthenticatedRequest, res: Response) 
           select: {
             id: true,
             email: true,
+            phoneNumber: true,
             profile: {
               select: {
                 firstName: true,
-                lastName: true,
-                phoneNumber: true
+                lastName: true
               }
             }
           }
@@ -160,7 +156,10 @@ export const bookAppointment = async (req: AuthenticatedRequest, res: Response) 
       }
     });
 
-    res.status(201).json({
+  // notify clients subscribed to the service
+  getIO()?.to(appointment.serviceId).emit('appointment:booked', { appointmentId: appointment.id });
+
+  res.status(201).json({
       success: true,
       data: {
         appointment,
@@ -268,11 +267,11 @@ export const getAppointmentById = async (req: AuthenticatedRequest, res: Respons
           select: {
             id: true,
             email: true,
+            phoneNumber: true,
             profile: {
               select: {
                 firstName: true,
-                lastName: true,
-                phoneNumber: true
+                lastName: true
               }
             }
           }
@@ -385,7 +384,7 @@ export const rescheduleAppointment = async (req: AuthenticatedRequest, res: Resp
     }
 
     // Update appointment
-    const updatedAppointment = await prisma.governmentServiceAppointment.update({
+  const updatedAppointment = await prisma.governmentServiceAppointment.update({
       where: { id },
       data: {
         appointmentDate: newDateTime,
@@ -406,6 +405,8 @@ export const rescheduleAppointment = async (req: AuthenticatedRequest, res: Resp
         }
       }
     });
+
+  getIO()?.to(appointment.serviceId).emit('appointment:rescheduled', { appointmentId: id });
 
     res.json({
       success: true,
@@ -455,7 +456,7 @@ export const cancelAppointment = async (req: AuthenticatedRequest, res: Response
       });
     }
 
-    const updatedAppointment = await prisma.governmentServiceAppointment.update({
+  const updatedAppointment = await prisma.governmentServiceAppointment.update({
       where: { id },
       data: {
         status: 'CANCELLED',
@@ -464,6 +465,8 @@ export const cancelAppointment = async (req: AuthenticatedRequest, res: Response
           : appointment.notes
       }
     });
+
+  getIO()?.to(appointment.serviceId).emit('appointment:cancelled', { appointmentId: id });
 
     res.json({
       success: true,

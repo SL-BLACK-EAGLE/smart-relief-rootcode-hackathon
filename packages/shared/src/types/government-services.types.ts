@@ -80,6 +80,25 @@ export type QueuePriority =
     | 'ELDERLY'
     | 'PREGNANT';
 
+// Government service categories (aligning with backend Prisma schema)
+export type GovernmentServiceCategory =
+    | 'HEALTHCARE'
+    | 'EDUCATION'
+    | 'SOCIAL_WELFARE'
+    | 'HOUSING'
+    | 'EMPLOYMENT'
+    | 'DOCUMENTATION'
+    | 'LICENSING'
+    | 'PERMITS'
+    | 'EMERGENCY_SERVICES'
+    | 'UTILITIES'
+    | 'TRANSPORTATION'
+    | 'LEGAL_AID'
+    | 'INSURANCE'
+    | 'DISABILITY_SERVICES'
+    | 'ELDERLY_CARE'
+    | 'OTHER';
+
 // Disaster Types (for context and categorization)
 export type DisasterType =
     | 'NATURAL_DISASTER'
@@ -574,4 +593,24 @@ export interface ReliefServiceSearchParams {
     offlineCapable?: boolean;
     vulnerablePopulationSupport?: boolean;
     query?: string;
+}
+
+// Create government service request
+export interface CreateGovernmentServiceRequest {
+    name: string;
+    description: string;
+    category: GovernmentServiceCategory;
+    department: string;
+    requiresDocuments?: boolean;
+    avgProcessingTime: number; // minutes
+    cost?: number;
+    allowsOnlineBooking?: boolean;
+    maxAdvanceBookingDays?: number;
+    slotDuration?: number;
+    bufferTime?: number;
+    maxDailySlots?: number;
+    requiredDocuments: string[];
+    eligibilityCriteria?: string;
+    officeLocation: string;
+    contactInfo: Record<string, any>;
 }
