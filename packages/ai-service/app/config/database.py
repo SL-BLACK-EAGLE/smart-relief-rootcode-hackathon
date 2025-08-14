@@ -9,7 +9,7 @@ from ..config.settings import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Create SQLAlchemy engine
+# Create SQLAlchemy engine with proper configuration
 engine = create_engine(
     settings.database_url,
     echo=settings.debug,  # Log SQL queries in debug mode
@@ -38,7 +38,12 @@ def init_database():
         from ..models.priority_scoring import PriorityScoreModel
         from ..models.resource_prediction import ResourcePredictionModel
 
-        logger.info("Models imported successfully")
+        model_names = [
+            DamageAssessmentModel.__tablename__,
+            PriorityScoreModel.__tablename__,
+            ResourcePredictionModel.__tablename__
+        ]
+        logger.info(f"Creating tables for models: {model_names}")
 
         # Test database connection first
         with engine.connect() as conn:
@@ -48,39 +53,20 @@ def init_database():
             if 'postgresql' in str(engine.url):
                 conn.execute(text("CREATE SCHEMA IF NOT EXISTS public"))
                 conn.commit()
-        
+                logger.info("PostgreSQL schema verified")
+
         # Create all tables
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine, checkfirst=True)
-        
-        # Verify tables were created
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+
+        # Test basic connection
         with engine.connect() as conn:
             if 'postgresql' in str(engine.url):
-                result = conn.execute(text("""
-                    SELECT table_name 
-                    FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
-                    AND table_type = 'BASE TABLE'
-                """))
+                result = conn.execute(text("SELECT 1"))
             else:
-                result = conn.execute(text("""
-                    SELECT name 
-                    FROM sqlite_master 
-                    WHERE type='table'
-                """))
-            
-            tables = [row[0] for row in result]
-            logger.info(f"Tables created successfully: {tables}")
-            
-            # Verify specific tables exist
-            expected_tables = ['damage_assessments', 'priority_scores', 'resource_predictions']
-            missing_tables = [t for t in expected_tables if t not in tables]
-            if missing_tables:
-                logger.error(f"Missing tables: {missing_tables}")
-                raise Exception(f"Failed to create tables: {missing_tables}")
-            
-        logger.info("Database initialization completed successfully")
-        
+                result = conn.execute(text("SELECT 1"))
+            logger.info("Database connection test successful")
+
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise

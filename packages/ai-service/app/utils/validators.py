@@ -3,8 +3,6 @@ Validation Utilities
 Helper functions for data validation and file validation
 """
 from typing import List, Dict, Any, Optional
-import os
-import magic
 from fastapi import UploadFile
 
 class FileValidator:

@@ -1,15 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS base
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,5 +26,10 @@ RUN mkdir -p uploads ml_models data/training data/validation data/test
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Development target
+FROM base AS development
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Production target
+FROM base AS production
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
