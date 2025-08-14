@@ -171,7 +171,7 @@ export default function SignIn() {
                     <View style={{ height: sizes.bottomHeight * 0.52 }} />
 
                     {/* Login button */}
-                    <TouchableOpacity className="self-center">
+                    <TouchableOpacity className="self-center" onPress={()=> router.push('/')}>
                         <View className="w-[191px] h-[45px] rounded-full bg-[#3072bf] items-center justify-center">
                             <Text className="text-white text-[16px] font-semibold">Login</Text>
                         </View>
