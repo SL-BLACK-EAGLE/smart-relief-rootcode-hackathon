@@ -15,6 +15,20 @@ import { openapiRouter } from './openapi.routes';
 
 const router = Router();
 
+// API index
+router.get('/api', (_req, res) => {
+	res.json({
+		name: 'SmartRelief Backend API',
+		status: 'running',
+		docs: '/openapi',
+		health: '/health',
+		basePaths: {
+			api: '/api',
+			ai: '/api/ai'
+		}
+	});
+});
+
 // Government Services API routes
 router.use('/api/government-services', governmentServicesRouter);
 router.use('/api/appointments', appointmentsRouter);

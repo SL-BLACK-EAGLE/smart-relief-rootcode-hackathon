@@ -8,6 +8,8 @@ import { apiRouter } from './routes';
 import { authMiddleware } from './middleware/auth.middleware';
 import { corsMiddleware } from './middleware/cors.middleware';
 import { apiRateLimiter } from './middleware/rate-limit.middleware';
+import { metricsMiddleware, register as metricsRegistry } from './metrics';
+import promClient from 'prom-client';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -22,12 +24,19 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(authMiddleware);
+app.use(metricsMiddleware);
 
 // Basic rate limit
 app.use(apiRateLimiter);
 
 // Health
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'backend' }));
+
+// Metrics
+app.get('/metrics', async (_req, res) => {
+	res.set('Content-Type', metricsRegistry.contentType);
+	res.end(await metricsRegistry.metrics());
+});
 
 // API routes
 app.use('/', apiRouter);
