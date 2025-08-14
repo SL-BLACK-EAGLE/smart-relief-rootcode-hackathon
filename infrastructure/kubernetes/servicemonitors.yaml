@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend-servicemonitor
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - smartrelief
+  selector:
+    matchLabels:
+      app: backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ai-service-servicemonitor
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - smartrelief
+  selector:
+    matchLabels:
+      app: ai-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

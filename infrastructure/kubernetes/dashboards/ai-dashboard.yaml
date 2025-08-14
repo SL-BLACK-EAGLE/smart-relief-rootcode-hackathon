@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-ai-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: smartrelief
+    dashboard: ai
+data:
+  ai-dashboard.json: |
+    {
+      "schemaVersion": 36,
+      "title": "SmartRelief AI Service (FastAPI)",
+      "refresh": "10s",
+      "time": { "from": "now-15m", "to": "now" },
+      "panels": [
+        {
+          "type": "graph",
+          "title": "Requests per Second",
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total[1m]))",
+              "legendFormat": "rps"
+            }
+          ],
+          "id": 1,
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+        }
+      ]
+    }

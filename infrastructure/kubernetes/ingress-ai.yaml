@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-ingress
+  namespace: smartrelief
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - smartrelief.local
+      secretName: smartrelief-local-tls
+  rules:
+    - host: smartrelief.local
+      http:
+        paths:
+          - path: /ai
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 8000

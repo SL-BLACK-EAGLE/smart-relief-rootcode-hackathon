@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-backend-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: smartrelief
+    dashboard: backend
+data:
+  backend-dashboard.json: |
+    {
+      "schemaVersion": 36,
+      "title": "SmartRelief Backend (Express)",
+      "refresh": "10s",
+      "time": { "from": "now-15m", "to": "now" },
+      "panels": [
+        {
+          "type": "graph",
+          "title": "HTTP Requests Total",
+          "targets": [
+            {
+              "expr": "sum by (method, route, status_code) (http_requests_total)",
+              "legendFormat": "{{method}} {{route}} {{status_code}}"
+            }
+          ],
+          "id": 1,
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+        },
+        {
+          "type": "heatmap",
+          "title": "Request Duration (s)",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))",
+              "legendFormat": "p95 {{route}}"
+            }
+          ],
+          "id": 2,
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+        },
+        {
+          "type": "stat",
+          "title": "In-Progress Requests",
+          "targets": [
+            { "expr": "sum(http_request_duration_seconds_count)" }
+          ],
+          "id": 3,
+          "gridPos": { "x": 0, "y": 8, "w": 6, "h": 6 }
+        }
+      ]
+    }
