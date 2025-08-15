@@ -57,6 +57,11 @@ COPY --from=base /workspace/packages/backend/dist /app/dist
 COPY --from=base /workspace/packages/backend/package.json /app/package.json
 # Ensure the shared workspace package is available at runtime in node_modules
 COPY --from=base /workspace/packages/shared /app/node_modules/@smartrelief/shared
+# Copy prisma schema & migrations for runtime migrate deploy / optional seeding
+COPY --from=base /workspace/packages/backend/prisma /app/prisma
+# Production entry script to run migrations then start server
+COPY packages/backend/scripts/prod-entry.sh /usr/local/bin/prod-entry.sh
+RUN chmod +x /usr/local/bin/prod-entry.sh
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["/usr/local/bin/prod-entry.sh"]

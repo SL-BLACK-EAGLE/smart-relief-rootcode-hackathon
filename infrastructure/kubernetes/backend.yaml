@@ -17,6 +17,50 @@ spec:
         prometheus.io/port: "3000"
         prometheus.io/path: "/metrics"
     spec:
+      initContainers:
+        - name: migrate
+          image: smartrelief/backend:dev
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              echo '[init-migrate] Starting migration init';
+              echo '[init-migrate] Working dir:' $(pwd);
+              echo '[init-migrate] Node version:' $(node -v 2>&1);
+              echo '[init-migrate] NPM version:' $(npm -v 2>&1);
+              echo '[init-migrate] Directory tree (top level)'; ls -1;
+              if [ ! -d prisma ]; then
+                echo '[init-migrate] /app/prisma missing';
+                if [ -d packages/backend/prisma ]; then
+                  echo '[init-migrate] Found prisma at packages/backend/prisma - copying';
+                  cp -r packages/backend/prisma prisma;
+                else
+                  echo '[init-migrate] No alternate prisma directory found';
+                fi;
+              fi;
+              echo '[init-migrate] Listing prisma directory (recursive)'; ls -R prisma 2>&1 || echo '[init-migrate] prisma dir still missing';
+              echo '[init-migrate] First 20 lines of schema:'; head -n 20 prisma/schema.prisma 2>&1 || echo '[init-migrate] schema file missing';
+              SCHEMA=prisma/schema.prisma;
+              if [ ! -f "$SCHEMA" ]; then echo '[init-migrate] Schema file absent, aborting'; exit 1; fi;
+              echo '[init-migrate] Prisma migrate status (non-fatal if fails)':; npx prisma migrate status --schema $SCHEMA 2>&1 || echo '[init-migrate] migrate status failed';
+              echo '[init-migrate] Running prisma migrate deploy';
+              if npx prisma migrate deploy --schema $SCHEMA; then
+                echo '[init-migrate] migrate deploy success';
+              else
+                echo '[init-migrate] migrate deploy failed - attempting fallback db push';
+                npx prisma db push --accept-data-loss --schema $SCHEMA || { echo '[init-migrate] Fallback db push failed'; exit 1; };
+              fi;
+              echo '[init-migrate] Complete';
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env:
+            - name: NODE_ENV
+              value: production
+          volumeMounts: []
       containers:
         - name: backend
           # Use production image; build with Minikube Docker daemon
@@ -29,6 +73,9 @@ spec:
                 name: app-config
             - secretRef:
                 name: app-secrets
+          env:
+            - name: SEED_ON_START
+              value: "false"
           readinessProbe:
             httpGet:
               path: /health

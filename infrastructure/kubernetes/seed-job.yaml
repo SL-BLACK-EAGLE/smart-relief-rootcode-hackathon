@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: backend-seed
+  namespace: smartrelief
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: smartrelief/backend:dev
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "echo '[seed-job] Running prisma migrate deploy'; npx prisma migrate deploy && echo '[seed-job] Seeding database'; npm run db:seed && echo '[seed-job] Done'"]
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets

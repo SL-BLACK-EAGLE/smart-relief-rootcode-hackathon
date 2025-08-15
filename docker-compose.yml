@@ -1,6 +1,5 @@
-version: '3.9'
+version: "3.9"
 services:
-  # PostgreSQL Database
   postgres:
     image: postgis/postgis:15-3.3
     container_name: smartrelief-postgres
@@ -23,7 +22,6 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: smartrelief-redis
@@ -33,7 +31,6 @@ services:
       - redis_data:/data
     networks:
       - smartrelief-network
-    # Make requirepass optional only when REDIS_PASSWORD is provided
     command: ["sh", "-c", "redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -42,7 +39,6 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # Backend API Service
   backend:
     build:
       context: .
@@ -62,8 +58,14 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./packages/backend:/app
-      - /app/node_modules
+      # Mount only source and schema for live reload without clobbering node_modules
+      - ./packages/backend/src:/app/src
+      - ./packages/backend/prisma:/app/prisma
+      - ./packages/backend/package.json:/app/package.json:ro
+      - ./packages/backend/tsconfig.json:/app/tsconfig.json:ro
+      - ./packages/backend/tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ./packages/backend/scripts:/app/scripts
+      - ./packages/backend/.env:/app/.env:ro
       - ./packages/shared:/shared
     networks:
       - smartrelief-network
@@ -78,9 +80,7 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
-  # develop/watch removed for compatibility with older Compose versions
 
-  # AI/ML Service
   ai-service:
     build:
       context: ./packages/ai-service
@@ -110,9 +110,7 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
-  # develop/watch removed for compatibility with older Compose versions
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: smartrelief-nginx
@@ -120,7 +118,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d
       - ./ssl:/etc/nginx/ssl
     networks:
@@ -130,14 +127,13 @@ services:
       - ai-service
     restart: unless-stopped
 
-  # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
     container_name: smartrelief-prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./infrastructure/monitoring/prometheus-dev.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     networks:
       - smartrelief-network
@@ -149,7 +145,6 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
 
-  # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
     container_name: smartrelief-grafana
@@ -168,7 +163,6 @@ services:
       - prometheus
     restart: unless-stopped
 
-  # Elasticsearch for Logging
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
     container_name: smartrelief-elasticsearch
@@ -184,7 +178,6 @@ services:
       - smartrelief-network
     restart: unless-stopped
 
-  # Kibana for Log Visualization
   kibana:
     image: docker.elastic.co/kibana/kibana:8.8.0
     container_name: smartrelief-kibana
@@ -198,7 +191,6 @@ services:
       - elasticsearch
     restart: unless-stopped
 
-  # Jaeger for Distributed Tracing
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: smartrelief-jaeger
@@ -211,7 +203,6 @@ services:
       - smartrelief-network
     restart: unless-stopped
 
-  # MinIO for Local S3-compatible Storage
   minio:
     image: minio/minio:latest
     container_name: smartrelief-minio
@@ -228,7 +219,6 @@ services:
       - smartrelief-network
     restart: unless-stopped
 
-  # MailHog for Email Testing
   mailhog:
     image: mailhog/mailhog:latest
     container_name: smartrelief-mailhog
@@ -237,6 +227,48 @@ services:
       - "8025:8025"
     networks:
       - smartrelief-network
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:8.5
+    container_name: smartrelief-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
+      # String values in PGADMIN_CONFIG_* must be valid Python literals; wrap banner in quotes
+      PGADMIN_CONFIG_LOGIN_BANNER: "'SmartRelief Local pgAdmin'"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - smartrelief-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/misc/ping || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: smartrelief-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - smartrelief-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 networks:
@@ -260,4 +292,6 @@ volumes:
   minio_data:
     driver: local
   ai_models_cache:
+    driver: local
+  pgadmin_data:
     driver: local
