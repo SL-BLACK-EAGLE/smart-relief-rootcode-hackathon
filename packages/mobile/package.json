@@ -1,6 +1,7 @@
 {
-  "name": "mobile",
+  "name": "@smartrelief/mobile",
   "main": "expo-router/entry",
+  "description": "SmartRelief Mobile Application",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -11,6 +12,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@smartrelief/shared": "1.0.0",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/bottom-tabs": "^7.3.10",

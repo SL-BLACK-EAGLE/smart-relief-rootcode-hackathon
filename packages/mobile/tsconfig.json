@@ -3,6 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
+      "@smartrelief/shared": ["../shared/dist"],
+      "@smartrelief/shared/*": ["../shared/dist/*"],
       "@/*": [
         "./*"
       ]
@@ -14,5 +16,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-  ]
+  ],
+  "exclude": ["node_modules", "dist"]
 }
