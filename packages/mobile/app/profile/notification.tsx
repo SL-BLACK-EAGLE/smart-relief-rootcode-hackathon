@@ -11,6 +11,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
+import {router} from "expo-router";
 
 type Notice = {
     id: number
@@ -87,7 +88,10 @@ const NotificationsScreen = () => {
 
                 {/* Back + centered title */}
                 <View className="absolute left-0 right-0 top-0 mt-4 px-4 pt-6">
-                    <TouchableOpacity className="w-10 h-10 rounded-full bg-white/20 items-center justify-center">
+                    <TouchableOpacity
+                        className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+                        onPress={() => router.back()}
+                    >
                         <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
                     <View className="absolute left-0 right-0 mt-6 items-center">

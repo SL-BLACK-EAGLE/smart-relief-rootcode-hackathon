@@ -3,6 +3,7 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image } from "react-native"
 import { useState } from "react"
 import { Ionicons } from "@expo/vector-icons"
+import {router} from "expo-router";
 
 const ResetPassword = () => {
     const [currentPassword, setCurrentPassword] = useState("123456")
@@ -25,15 +26,26 @@ const ResetPassword = () => {
                         className="w-full"
                         resizeMode="cover"
                     />
-                    <View className="absolute mt-10 top-0 left-1/2 -translate-x-1/2 p-4">
-                        <Text className="text-white text-xl font-semibold text-center">Change Password</Text>
+
+                    <View className="absolute left-0 right-0 top-0 px-4 pt-6 mt-4">
+                        <TouchableOpacity
+                            className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            onPress={() => router.back()}
+                        >
+                            <Ionicons name="chevron-back" size={22} color="#fff" />
+                        </TouchableOpacity>
+
+                        <View className="absolute left-0 right-0 items-center mt-8">
+                            <Text className="text-white text-xl font-semibold">Change Password</Text>
+                        </View>
                     </View>
                 </View>
 
-                <View className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-                    <View className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                        <View
-                            className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden">
+                {/* Overlapping avatar */}
+                <View className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+                    <View className="w-24 h-24 bg-white rounded-full items-center justify-center shadow-lg">
+                        <View className="w-20 h-20 rounded-full items-center justify-center overflow-hidden">
                             <Image
                                 source={require("../../assets/images/profile-avator.png")}
                                 className="w-20 h-20 rounded-full"

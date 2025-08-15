@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Image, ScrollView, TextInput, Modal, Pres
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
+import { router } from "expo-router"
 
 const MyProfile = () => {
     const [dob, setDob] = useState(new Date("2002-10-05"));
@@ -19,25 +20,23 @@ const MyProfile = () => {
     return (
         <ScrollView className="flex-1 bg-[#E8F5FB]">
             <View className="relative">
-                <View className="h-48 mt-2 mx-2 relative overflow-hidden rounded-3xl">
+                <View className="h-48 mt-2 mx-2 relative">
                     <Image
                         source={require("../../assets/images/blue-glasses.png")}
-                        className="w-full h-full"
+                        className="w-full"
                         resizeMode="cover"
                     />
 
-                    {/* Back button + centered title */}
-                    <View className="absolute left-0 right-0 top-0 px-4 pt-6">
-                        {/* Back button (left) */}
+                    <View className="absolute left-0 right-0 top-0 px-4 pt-6 mt-4">
                         <TouchableOpacity
                             className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            onPress={() => router.back()}
                         >
                             <Ionicons name="chevron-back" size={22} color="#fff" />
                         </TouchableOpacity>
 
-                        {/* Centered title */}
-                        <View className="absolute left-0 right-0 items-center mt-1">
+                        <View className="absolute left-0 right-0 items-center mt-8">
                             <Text className="text-white text-xl font-semibold">Your Profile</Text>
                         </View>
                     </View>
