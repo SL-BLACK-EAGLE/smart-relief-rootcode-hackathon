@@ -53,3 +53,14 @@ spec:
                 name: redis-commander
                 port:
                   number: 8081
+    # Loopback nip.io variant for direct access without patch script
+    - host: redis.127-0-0-1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: redis-commander
+                port:
+                  number: 8081

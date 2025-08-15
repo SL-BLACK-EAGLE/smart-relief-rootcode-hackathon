@@ -1,11 +1,45 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: smartrelief
+
+# Core application & infrastructure resources for SmartRelief.
+# Apply with: kubectl apply -k infrastructure/kubernetes
+# (Images must already exist in Minikube Docker daemon or come from a registry.)
 resources:
+  # Core namespace & config
   - namespace.yaml
+  - app-config.yaml
+
+  # Data layer
   - postgres.yaml
   - redis.yaml
+
+  # Workloads
   - backend.yaml
   - ai-service.yaml
+
+  # Ingress (backend + AI + extras catch‑all)
   - ingress-backend.yaml
   - ingress-ai.yaml
+  - ingress-extras.yaml
+
+  # Observability / monitoring (base stack)
+  - monitoring.yaml
+  - hpa.yaml
+
+  # Optional supporting services (comment out what you don't need)
+  - elasticsearch.yaml
+  - kibana.yaml
+  - jaeger.yaml
+  - minio.yaml
+  - mailhog.yaml
+  - pgadmin.yaml
+  - redis-commander.yaml
+
+# NOT AUTOMATICALLY INCLUDED (apply manually when needed):
+# - seed-job.yaml          # Run only when you need to (re)seed data
+# - tls.yaml               # Cert / TLS setup (requires cert-manager)
+# - servicemonitors.yaml   # Prometheus Operator CRDs must exist first
+
+# Future overlays idea:
+# Create overlays/dev & overlays/prod to vary included resources (e.g., exclude heavy observability in dev fast mode).

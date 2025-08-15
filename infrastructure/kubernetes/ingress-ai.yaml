@@ -3,18 +3,27 @@ kind: Ingress
 metadata:
   name: ai-ingress
   namespace: smartrelief
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - smartrelief.local
-      secretName: smartrelief-local-tls
   rules:
-    - host: smartrelief.local
+    - host: 127-0-0-1.nip.io
       http:
         paths:
-          - path: /ai
-            pathType: Prefix
+          - path: /ai(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 8000
+    - host: absolute-raccoon-adjusted.ngrok-free.app
+      http:
+        paths:
+          - path: /ai(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: ai-service

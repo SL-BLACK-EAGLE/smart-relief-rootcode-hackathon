@@ -9,7 +9,9 @@ data:
   SEED_ON_START: "true"
   DATABASE_URL: "postgresql://smartrelief:password@postgres.smartrelief.svc.cluster.local:5432/smartrelief_dev"
   REDIS_URL: "redis://redis.smartrelief.svc.cluster.local:6379"
-  CORS_ORIGIN: "*"
+  # Comma separated list of allowed origins including local ingress and static ngrok domain
+  CORS_ORIGIN: "http://localhost:3000,https://absolute-raccoon-adjusted.ngrok-free.app"
+  PUBLIC_BASE_URL: "https://absolute-raccoon-adjusted.ngrok-free.app"
   AI_BASE_URL: "http://ai-service.smartrelief.svc.cluster.local:8000/api/v1"
   SOCKET_AUTH_REQUIRED: "false"
   PORT: "3000"

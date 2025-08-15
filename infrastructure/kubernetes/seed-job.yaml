@@ -12,7 +12,20 @@ spec:
         - name: seed
           image: smartrelief/backend:dev
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "echo '[seed-job] Running prisma migrate deploy'; npx prisma migrate deploy && echo '[seed-job] Seeding database'; npm run db:seed && echo '[seed-job] Done'"]
+          command:
+            - sh
+            - -c
+            - >-
+              echo '[seed-job] Running prisma migrate deploy';
+              if npx prisma migrate deploy --schema prisma/schema.prisma; then
+                echo '[seed-job] migrate deploy succeeded';
+              else
+                echo '[seed-job] migrate deploy failed - attempting db push fallback';
+                npx prisma db push --accept-data-loss --schema prisma/schema.prisma || { echo '[seed-job] db push fallback failed'; exit 1; };
+              fi;
+              echo '[seed-job] Seeding database';
+              npm run db:seed || { echo '[seed-job] Seed failed'; exit 1; };
+              echo '[seed-job] Done';
           envFrom:
             - configMapRef:
                 name: app-config

@@ -51,7 +51,9 @@ services:
       DATABASE_URL: "postgresql://smartrelief:password@postgres:5432/smartrelief_dev"
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-0123456789abcdef0123456789abcdef01234567}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Allow local and static ngrok domain for testing
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-https://absolute-raccoon-adjusted.ngrok-free.app}"
+      CORS_ORIGIN: "${CORS_ORIGIN:-http://localhost:3000,https://absolute-raccoon-adjusted.ngrok-free.app}"
       AI_BASE_URL: ${AI_BASE_URL:-http://ai-service:8000/api/v1}
       SOCKET_AUTH_REQUIRED: ${SOCKET_AUTH_REQUIRED:-false}
       PORT: 3000
@@ -91,6 +93,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-smartrelief}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-smartrelief_dev}
       REDIS_URL: redis://redis:6379
       BACKEND_API_URL: http://backend:3000
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-https://absolute-raccoon-adjusted.ngrok-free.app}"
     ports:
       - "8000:8000"
     volumes:

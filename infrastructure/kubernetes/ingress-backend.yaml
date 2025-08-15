@@ -5,12 +5,9 @@ metadata:
   namespace: smartrelief
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - smartrelief.local
-      secretName: smartrelief-local-tls
   rules:
-    - host: smartrelief.local
+    # Existing loopback/nip.io host (already used locally)
+    - host: 127-0-0-1.nip.io
       http:
         paths:
           - path: /api
@@ -42,6 +39,59 @@ spec:
                 port:
                   number: 3000
           - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+    # Static ngrok domain
+    - host: absolute-raccoon-adjusted.ngrok-free.app
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /socket.io
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /openapi
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
+          - path: /
             pathType: Prefix
             backend:
               service:

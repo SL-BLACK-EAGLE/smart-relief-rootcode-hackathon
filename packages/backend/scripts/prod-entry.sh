@@ -2,7 +2,18 @@
 set -e
 
 echo "[prod-entry] Running prisma migrate deploy..."
-npx prisma migrate deploy || { echo "[prod-entry] migrate deploy failed"; exit 1; }
+if npx prisma migrate deploy; then
+  echo "[prod-entry] migrate deploy succeeded"
+else
+  EXIT_CODE=$?
+  echo "[prod-entry] migrate deploy failed with code $EXIT_CODE (likely P3005 if schema already exists). Falling back to db push to sync schema without migration history."
+  if npx prisma db push --accept-data-loss; then
+    echo "[prod-entry] db push fallback succeeded"
+  else
+    echo "[prod-entry] db push fallback failed; exiting"
+    exit 1
+  fi
+fi
 
 if [ "$SEED_ON_START" = "true" ]; then
   echo "[prod-entry] Seeding database..."

@@ -1,8 +1,5 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: monitoring
----
+# (Namespace 'monitoring' intentionally not declared here to avoid kustomize ID conflicts.
+# Create it separately if not existing: kubectl create ns monitoring || true)
 apiVersion: v1
 kind: ConfigMap
 metadata:

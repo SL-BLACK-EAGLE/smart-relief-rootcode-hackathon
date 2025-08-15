@@ -55,3 +55,13 @@ spec:
                 name: pgadmin
                 port:
                   number: 80
+    - host: pgadmin.127-0-0-1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin
+                port:
+                  number: 80
