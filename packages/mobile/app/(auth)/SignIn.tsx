@@ -40,7 +40,7 @@ export default function SignIn() {
     // Navigate to dashboard when authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            router.push('/victim/VictimOperationsDashboard');
+          router.push('/(tabs)');
         }
     }, [isAuthenticated, router]);
 
