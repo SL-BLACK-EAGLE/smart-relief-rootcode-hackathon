@@ -18,7 +18,7 @@ type Notice = {
     title: string
     timestamp: string
     description: string
-    image: any // require(...) or { uri: string }
+    image: any
 }
 
 const NotificationsScreen = () => {
@@ -29,7 +29,7 @@ const NotificationsScreen = () => {
             timestamp: "2025.07.10  3:45 PM",
             description:
                 "Nature's fury knows no bounds—a clash between raging storms and relentless heat leaves the land scarred and lifeless. This event reminds us of the fragile balance we depend on.",
-            image: require("../../assets/images/flood.png"), // <-- change to your asset
+            image: require("../../assets/images/flood.png"),
         },
         {
             id: 2,
@@ -68,7 +68,6 @@ const NotificationsScreen = () => {
 
     return (
         <SafeAreaView className="flex-1" style={{ backgroundColor: "#EAF6FF" }}>
-            {/* Header (simplified – keep yours if you already have one) */}
             <View className="relative">
                 <View style={{  height: 100,  overflow: "hidden" }}>
                     <Image
@@ -79,14 +78,13 @@ const NotificationsScreen = () => {
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            width: "110%",       // small overscan to avoid edge gaps
-                            height: 100,          // tune until it matches your design
+                            width: "110%",
+                            height: 100,
                             alignSelf: "center",
                         }}
                     />
                 </View>
 
-                {/* Back + centered title */}
                 <View className="absolute left-0 right-0 top-0 mt-4 px-4 pt-6">
                     <TouchableOpacity
                         className="w-10 h-10 rounded-full bg-white/20 items-center justify-center"
@@ -100,7 +98,6 @@ const NotificationsScreen = () => {
                 </View>
             </View>
 
-            {/* List */}
             <ScrollView
                 className="flex-1 px-4"
                 contentContainerStyle={{ paddingTop: 10, paddingBottom: 24 }}
@@ -145,7 +142,6 @@ const NotificationsScreen = () => {
                 </View>
             </ScrollView>
 
-            {/* ===== Modal (model) part ===== */}
             <Modal
                 visible={open}
                 transparent
@@ -153,14 +149,11 @@ const NotificationsScreen = () => {
                 statusBarTranslucent
                 onRequestClose={closeModal}
             >
-                {/* full-screen center wrapper */}
                 <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 20 }}>
-                    {/* dim overlay (tap outside to close) */}
                     <TouchableWithoutFeedback onPress={closeModal}>
                         <View style={{ backgroundColor: "rgba(0,0,0,0.4)" }} />
                     </TouchableWithoutFeedback>
 
-                    {/* modal card */}
                     <View
                         className="rounded-3xl bg-white border"
                         style={{
@@ -168,7 +161,6 @@ const NotificationsScreen = () => {
                             maxWidth: 420,
                             borderColor: "#C7E0FF",
                             paddingBottom: 12,
-                            // soft drop shadow
                             shadowColor: "#000",
                             shadowOpacity: 0.18,
                             shadowRadius: 18,
@@ -176,7 +168,6 @@ const NotificationsScreen = () => {
                             elevation: 12,
                         }}
                     >
-                        {/* header row: bell - timestamp - close */}
                         <View className="flex-row items-center justify-between px-4 pt-3">
                             <Ionicons name="notifications" size={18} color="#F59E0B" />
                             <Text className="text-gray-500 text-[11px]">{selected?.timestamp}</Text>
@@ -185,7 +176,6 @@ const NotificationsScreen = () => {
                             </TouchableOpacity>
                         </View>
 
-                        {/* body */}
                         <View className="px-4 pb-4">
                             {selected?.image ? (
                                 <Image

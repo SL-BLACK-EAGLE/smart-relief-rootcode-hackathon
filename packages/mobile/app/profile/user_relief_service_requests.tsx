@@ -6,7 +6,6 @@ const UserReliefServiceRequests = () => {
     return (
         <View className="flex-1 bg-slate-100">
             <View className="relative">
-                {/* Header background with gradient */}
                 <View className="bg-gradient-to-br from-cyan-400 to-blue-500 h-32 rounded-b-[40px]">
                     <View className="flex-row items-center justify-between px-6 pt-12">
                         <TouchableOpacity className="p-2">
@@ -18,14 +17,11 @@ const UserReliefServiceRequests = () => {
                     </View>
                 </View>
 
-                {/* Overlapping curved element for wave effect */}
                 <View className="absolute bottom-0 left-0 right-0 h-8 bg-slate-100 rounded-t-[40px]" />
             </View>
 
             <ScrollView className="flex-1 px-6 pt-6">
-                {/* Request Card */}
                 <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-                    {/* Card Header */}
                     <View className="flex-row justify-between items-center mb-4">
                         <View className="bg-red-500 px-3 py-1 rounded-full">
                             <Text className="text-white text-sm font-medium">Water Supply</Text>
@@ -33,7 +29,6 @@ const UserReliefServiceRequests = () => {
                         <Text className="text-gray-500 text-sm">2 hours ago</Text>
                     </View>
 
-                    {/* Request Details */}
                     <View className="space-y-3">
                         <View className="flex-row">
                             <Text className="text-gray-600 font-medium w-24">Your name:</Text>
@@ -66,7 +61,6 @@ const UserReliefServiceRequests = () => {
                         </View>
                     </View>
 
-                    {/* Action Buttons */}
                     <View className="flex-row gap-3 mt-6">
                         <TouchableOpacity className="flex-1 bg-teal-500 py-3 rounded-lg">
                             <Text className="text-white text-center font-medium">View More</Text>
@@ -78,7 +72,6 @@ const UserReliefServiceRequests = () => {
                     </View>
                 </View>
 
-                {/* Additional spacing for scroll */}
                 <View className="h-20" />
             </ScrollView>
         </View>
