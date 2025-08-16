@@ -96,8 +96,8 @@ export default function UserType() {
 
                 {/* Cards */}
                 <View className="mt-6 items-center gap-14">
-                    <CardTile image={A.victim} />
-                    <CardTile image={A.volunteer} />
+                    <CardTile image={A.victim} onPress={()=> router.push('/victim/VictimOperationsDashboard')}/>
+                    <CardTile image={A.volunteer}  />
                 </View>
             </ScrollView>
         </SafeAreaView>

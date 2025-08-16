@@ -55,7 +55,7 @@ export default function VictimOperationsDashboard() {
             backgroundColor: "#10B981", // Green gradient start
             gradientColors: ["#10B981", "#059669"],
             icon: A.emergencySupply,
-            route: "/victim/ManageEvacuationCenter",
+            route: "/victim/EmergencySupplyRequest",
         },
         {
             id: 4,

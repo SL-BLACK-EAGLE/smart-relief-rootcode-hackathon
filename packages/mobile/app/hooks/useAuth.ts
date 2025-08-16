@@ -37,6 +37,7 @@ export const useAuth = () => {
     } catch (error) {
       console.log('❌ Sign in failed in useAuth:', error);
       if (error instanceof ZodError) {
+        // @ts-ignore
         console.log('📋 Validation errors:', error.errors);
         const validationErrors: Partial<SignInFormData> = {};
         // @ts-ignore
