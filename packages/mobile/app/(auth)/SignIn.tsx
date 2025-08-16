@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
     Dimensions,
     Image,
@@ -9,10 +9,14 @@ import {
     StatusBar,
     Text,
     TextInput,
-    TouchableOpacity, SafeAreaView,
+    TouchableOpacity, 
+    SafeAreaView,
+    Alert,
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
+import { useAuth } from '../hooks/useAuth';
+import { SignInFormData } from '../schemas/authSchemas';
 
 const topBg = require("../../assets/images/top_bg.png");
 const bottomBg = require("../../assets/images/bottom_bg.png");
@@ -22,14 +26,32 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 /** Figma frame used for the top artwork */
 const TOP_FIGMA = { w: 439.7, h: 575.5 };
 
-
 const TOP_TUNE = { scale: 1.05, dx: 14, dy: 50 }; // <- tweak here if needed
 
 export default function SignIn() {
-    const [mobile, setMobile] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [show, setShow] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<Partial<SignInFormData>>({});
     const router = useRouter();
+    
+    const { signIn, isLoading, error, isAuthenticated, clearError } = useAuth();
+
+    // Navigate to dashboard when authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push('/victim/VictimOperationsDashboard');
+        }
+    }, [isAuthenticated, router]);
+
+    // Show error alerts
+    useEffect(() => {
+        if (error) {
+            Alert.alert('Sign In Error', error, [
+                { text: 'OK', onPress: () => clearError() }
+            ]);
+        }
+    }, [error, clearError]);
 
     const sizes = useMemo(() => {
         // Base scale from Figma width to device width
@@ -54,6 +76,36 @@ export default function SignIn() {
 
     // Positions the content inside the white area like in Figma
     const CONTENT_TOP_INSET = sizes.topHeight * 0.40;
+
+    const handleSignIn = async () => {
+        if (!email.trim() || !password.trim()) {
+            setValidationErrors({
+                email: !email.trim() ? 'Email is required' : undefined,
+                password: !password.trim() ? 'Password is required' : undefined,
+            });
+            return;
+        }
+
+        const credentials: SignInFormData = {
+            email: email.trim(),
+            password: password.trim(),
+        };
+
+        const result = await signIn(credentials);
+        
+        if (!result.success) {
+            if (result.validationErrors) {
+                setValidationErrors(result.validationErrors);
+            }
+            // API errors are handled by the useAuth hook and shown in useEffect
+        }
+    };
+
+    const clearFieldError = (field: keyof SignInFormData) => {
+        if (validationErrors[field]) {
+            setValidationErrors(prev => ({ ...prev, [field]: undefined }));
+        }
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-[#EBF8FF}">
@@ -119,31 +171,46 @@ export default function SignIn() {
 
                     {/* Form */}
                     <View className="mt-20 space-y-6">
-                        {/* Mobile */}
+                        {/* Email */}
                         <View className={' ml-4' } style={{ width: 320}}>
-                            <Text className="mb-2 text-[16px] font-manuale-semibold text-black font-semibold">Mobile</Text>
-                            <View className="rounded-xl border border-[#3C8FEF] bg-white shadow-sm" style={{ width: 320, height: 45 }}>
+                            <Text className="mb-2 text-[16px] font-manuale-semibold text-black font-semibold">Email</Text>
+                            <View className={`rounded-xl border ${validationErrors.email ? 'border-red-500' : 'border-[#3C8FEF]'} bg-white shadow-sm`} style={{ width: 320, height: 45 }}>
                                 <TextInput
-                                    placeholder="Enter Your Mobile"
+                                    placeholder="Enter Your Email"
                                     placeholderTextColor="#6D6E6E"
-                                    keyboardType="phone-pad"
-                                    value={mobile}
-                                    onChangeText={setMobile}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    value={email}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        clearFieldError('email');
+                                    }}
                                     className="px-4 py-3 text-[14px] font-poppins-regular text-black flex-1"
                                 />
                             </View>
+                            {validationErrors.email && (
+                                <Text className="mt-1 text-[12px] text-red-500 ml-2">
+                                    {validationErrors.email}
+                                </Text>
+                            )}
                         </View>
 
                         {/* Password */}
                         <View className={'mt-8 ml-4' } style={{ width: 320}}>
                             <Text className="mb-2  text-[16px] font-manuale-semibold text-black font-semibold">Password</Text>
-                            <View className="flex-row items-center rounded-xl border border-[#3C8FEF] bg-white shadow-sm" style={{ width: 320, height: 45 }}>
+                            <View className={`flex-row items-center rounded-xl border ${validationErrors.password ? 'border-red-500' : 'border-[#3C8FEF]'} bg-white shadow-sm`} style={{ width: 320, height: 45 }}>
                                 <TextInput
                                     placeholder="Enter Your Password"
                                     placeholderTextColor="#6D6E6E"
                                     secureTextEntry={!show}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(text) => {
+                                        setPassword(text);
+                                        clearFieldError('password');
+                                    }}
                                     className="flex-1 px-4 text-[14px] text-black font-poppins-regular"
                                 />
                                 <TouchableOpacity
@@ -158,6 +225,11 @@ export default function SignIn() {
                                     />
                                 </TouchableOpacity>
                             </View>
+                            {validationErrors.password && (
+                                <Text className="mt-1 text-[12px] text-red-500 ml-2">
+                                    {validationErrors.password}
+                                </Text>
+                            )}
 
                             <TouchableOpacity className="self-end mt-1" onPress={() => router.push('/(auth)/ForgotPassword')}>
                                 <Text className="text-[14px] text-[#3C8FEF] font-manuale-regular">
@@ -171,9 +243,15 @@ export default function SignIn() {
                     <View style={{ height: sizes.bottomHeight * 0.52 }} />
 
                     {/* Login button */}
-                    <TouchableOpacity className="self-center" onPress={()=> router.push('/')}>
-                        <View className="w-[191px] h-[45px] rounded-full bg-[#3072bf] items-center justify-center">
-                            <Text className="text-white text-[16px] font-semibold">Login</Text>
+                    <TouchableOpacity 
+                        className="self-center" 
+                        onPress={handleSignIn}
+                        disabled={isLoading}
+                    >
+                        <View className={`w-[191px] h-[45px] rounded-full ${isLoading ? 'bg-gray-400' : 'bg-[#3072bf]'} items-center justify-center`}>
+                            <Text className="text-white text-[16px] font-semibold">
+                                {isLoading ? 'Signing In...' : 'Login'}
+                            </Text>
                         </View>
                     </TouchableOpacity>
                 </View>

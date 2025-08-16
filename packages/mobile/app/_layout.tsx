@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import {useEffect, useState} from "react";
 import VideoSplashScreen from "@/components/VideoSplashScreen";
 import { useRouter } from 'expo-router';
+import { AuthProvider } from './components/AuthProvider';
 
 // SplashScreen.preventAutoHideAsync();
 
@@ -51,13 +52,15 @@ export default function RootLayout() {
     }
 
     return (
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-        </ThemeProvider>
+        <AuthProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+            </ThemeProvider>
+        </AuthProvider>
     );
 }

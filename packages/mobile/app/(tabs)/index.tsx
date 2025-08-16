@@ -1,7 +1,8 @@
 import {Ionicons} from "@expo/vector-icons";
 import {LinearGradient} from "expo-linear-gradient";
 import React, {useState} from "react";
-import {Image, ImageBackground, ScrollView, Text, View} from "react-native";
+import {Image, ImageBackground, Pressable, ScrollView, Text, View} from "react-native";
+import {router} from "expo-router";
 
 const weatherBg = require("../../assets/images/weather_bg.png");
 
@@ -187,6 +188,7 @@ function Chip({
     label: string; icon: any; source: any; // Image source
 }) {
     return (// @ts-ignore
+        <Pressable onPress={() => router.push({pathname:'/home/PredictorDisasters',params: { hazard: "floods" } })}>
         <ImageBackground
             source={source}
             resizeMode="cover"
@@ -199,7 +201,10 @@ function Chip({
                 style={{tintColor: "white"}}
             />
             <Text className="text-white mt-2 text-[12px]">{label}</Text>
-        </ImageBackground>);
+        </ImageBackground>
+        </Pressable>
+            );
+
 }
 
 function NewsCard({title, timeAgo, location}: {
