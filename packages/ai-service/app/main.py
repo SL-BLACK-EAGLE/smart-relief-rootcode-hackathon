@@ -117,11 +117,32 @@ app.add_middleware(
 )
 
 # Include API routers
-app.include_router(damage_assessment.router)
-app.include_router(priority_scoring.router)
-app.include_router(analytics.router)
-app.include_router(charts.router)
-app.include_router(weather.router)  # ✅ Added weather service
+app.include_router(damage_assessment.router)  # /api/v1/damage
+app.include_router(priority_scoring.router)   # /api/v1/priority
+app.include_router(analytics.router)          # /api/v1/analytics
+app.include_router(charts.router)             # /api/v1/charts
+app.include_router(weather.router)            # /api/v1/weather
+
+# Legacy backward compatibility: expose old unversioned paths for a short transition
+from fastapi import APIRouter as _LegacyRouter
+_legacy_router = _LegacyRouter()
+
+@_legacy_router.post('/analyze-by-url')
+async def _legacy_analyze(payload: dict):
+    from app.api.damage_assessment import analyze_damage_by_url, AnalyzeByUrlPayload
+    from app.config.database import SessionLocal
+    model = AnalyzeByUrlPayload(**payload)
+    db = SessionLocal()
+    try:
+        return await analyze_damage_by_url(model, db)
+    finally:
+        db.close()
+
+app.include_router(_legacy_router)
+
+@app.get("/metrics")
+async def metrics():
+    return {"service": "ai-service", "status": "ok"}
 
 # Root endpoint
 @app.get("/")

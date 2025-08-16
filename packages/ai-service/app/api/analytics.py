@@ -9,7 +9,7 @@ from typing import Optional
 from ..config.database import get_database
 from ..services.analytics_service import AnalyticsService
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/analytics")
 
 # Initialize services
 analytics_service = AnalyticsService()

@@ -9,7 +9,7 @@ from ..models.damage_assessment import DamageAssessmentModel
 from ..models.priority_scoring import PriorityScoreModel
 from ..models.resource_prediction import ResourcePredictionModel
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/priority")
 
 # Initialize services
 ml_service = MLService()

@@ -11,7 +11,7 @@ from ..config.database import get_database
 from ..models.damage_assessment import DamageAssessmentModel
 from ..models.priority_scoring import PriorityScoreModel
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/charts")
 
 @router.get("/damage-distribution")
 async def get_damage_distribution_chart(days: int = 30, db: Session = Depends(get_database)):

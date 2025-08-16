@@ -23,7 +23,7 @@ from ..models.damage_assessment import DamageAssessmentModel
 from ..schemas.damage_assessment import DamageAssessmentResponse
 from ..utils.image_io import download_and_normalize_image, validate_image_file
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/damage")
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
